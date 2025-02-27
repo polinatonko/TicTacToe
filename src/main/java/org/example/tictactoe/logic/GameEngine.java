@@ -2,6 +2,8 @@ package org.example.tictactoe.logic;
 
 import org.example.tictactoe.domain.*;
 
+import java.util.Optional;
+
 /**
  * TicTacToe game engine.
  */
@@ -9,7 +11,7 @@ public class GameEngine {
     private Board board;
     private Marker currentPlayer;
     private Mode mode;
-    private Level level;
+    private MoveStrategy strategy;
 
     /**
      * Initializes the game.
@@ -21,8 +23,8 @@ public class GameEngine {
     public GameEngine(int size, Mode mode, Level level) {
         this.board = new Board(size);
         this.mode = mode;
-        this.level = level;
         this.currentPlayer = Marker.X;
+        this.strategy = getStrategy(level);
     }
 
     /**
@@ -46,9 +48,9 @@ public class GameEngine {
      * @throws RuntimeException if the method was failed to generate a move
      */
     public boolean makeComputerMove() {
-        var position = AI.generateMove(board, currentPlayer, level)
+        var move = strategy.generateMove(board, currentPlayer)
                 .orElseThrow(() -> new RuntimeException("Can't calculate computer's move"));
-        return makePlayerMove(position);
+        return makePlayerMove(move);
     }
 
     /**
@@ -99,5 +101,20 @@ public class GameEngine {
     @Override
     public String toString() {
         return board.toString();
+    }
+
+    /**
+     * Returns strategy to generate computer moves based on the
+     * provided difficulty level.
+     *
+     * param level     the difficulty level of the game
+     * @return {@code MoveStrategy} for generating computer moves
+     * based on the difficulty level
+     */
+    private MoveStrategy getStrategy(Level level) {
+         return switch (level) {
+            case EASY -> new RandomMoveStrategy();
+            case HARD -> new MinimaxMoveStrategy();
+        };
     }
 }
