@@ -25,7 +25,7 @@ public class Board {
      * @param size     size of the board side
      */
     public Board(int size) {
-        this.size = Math.max(3, Math.min(size, MAX_SIZE));
+        this.size = Math.max(MIN_SIZE, Math.min(size, MAX_SIZE));
         this.cells = new Marker[size][size];
         reset();
     }
@@ -37,7 +37,7 @@ public class Board {
      * @param player     current player
      * @return {@code true} if the move was valid and was therefore made
      */
-    public boolean move(Move move, Marker player) {
+    public boolean tryMakeMove(Move move, Marker player) {
         if (validateMove(move)) {
             cells[move.row() - 1][move.col() - 1] = player;
             emptyCellsCount--;

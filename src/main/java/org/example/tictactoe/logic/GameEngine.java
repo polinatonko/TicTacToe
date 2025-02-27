@@ -31,8 +31,8 @@ public class GameEngine {
      * @param move      the player's move
      * @return {@code true} if the move was performed
      */
-    public boolean playerMove(Move move) {
-        boolean moveDone = board.move(move, currentPlayer);
+    public boolean makePlayerMove(Move move) {
+        boolean moveDone = board.tryMakeMove(move, currentPlayer);
         if (moveDone) {
             currentPlayer = currentPlayer.getOpposite();
         }
@@ -45,10 +45,10 @@ public class GameEngine {
      * @return {@code true} if the move was performed
      * @throws RuntimeException if the method was failed to generate a move
      */
-    public boolean computerMove() {
+    public boolean makeComputerMove() {
         var position = AI.generateMove(board, currentPlayer, level)
                 .orElseThrow(() -> new RuntimeException("Can't calculate computer's move"));
-        return playerMove(position);
+        return makePlayerMove(position);
     }
 
     /**
@@ -56,7 +56,7 @@ public class GameEngine {
      *
      * @return {@code true} if game is in progress now
      */
-    public boolean inProgress() {
+    public boolean isInProgress() {
         return board.getState() == State.NOT_OVER;
     }
 

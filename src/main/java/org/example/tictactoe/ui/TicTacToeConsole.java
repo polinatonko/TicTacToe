@@ -40,8 +40,8 @@ public class TicTacToeConsole {
         boolean playGame = true;
         while (playGame) {
             switch (game.getMode()) {
-                case HVH -> humanVersusHuman();
-                case HVC -> humanVersusComputer();
+                case HVH -> playHumanVersusHuman();
+                case HVC -> playHumanVersusComputer();
             }
 
             stats.compute(game.getState(), (state, count) -> count + 1);
@@ -126,24 +126,24 @@ public class TicTacToeConsole {
     /**
      * Plays Human Versus Human mode.
      */
-    private void humanVersusHuman() {
-        while (game.inProgress()) {
+    private void playHumanVersusHuman() {
+        while (game.isInProgress()) {
             System.out.println(game);
-            playerMove();
+            makePlayerMove();
         }
     }
 
     /**
      * Plays Human Versus Computer mode.
      */
-    private void humanVersusComputer() {
-        while (game.inProgress()) {
+    private void playHumanVersusComputer() {
+        while (game.isInProgress()) {
             System.out.println(game);
-            playerMove();
-            if (game.inProgress()) {
+            makePlayerMove();
+            if (game.isInProgress()) {
                 System.out.println(game);
                 System.out.println("Computer move:");
-                computerMove();
+                playComputerMove();
             }
         }
     }
@@ -152,9 +152,9 @@ public class TicTacToeConsole {
      * Inputs player's move from the console
      * and then performs this move.
      */
-    private void playerMove() {
+    private void makePlayerMove() {
         Move move = inputMove();
-        while (!game.playerMove(move)) {
+        while (!game.makePlayerMove(move)) {
             System.out.println("Cell [" + move.row() + ", " + move.col() + "] isn't empty.");
             move = inputMove();
         }
@@ -194,8 +194,8 @@ public class TicTacToeConsole {
     /**
      * Performs computer move.
      */
-    private void computerMove() {
-        game.computerMove();
+    private void playComputerMove() {
+        game.makeComputerMove();
     }
 
     private void printGameResult() {

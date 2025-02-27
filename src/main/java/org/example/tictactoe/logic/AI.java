@@ -28,8 +28,8 @@ class AI {
      */
     public static Optional<Move> generateMove(Board board, Marker player, Level level) {
         return switch (level) {
-            case EASY -> randomMove(board);
-            case HARD -> bestMove(board, player);
+            case EASY -> generateRandomMove(board);
+            case HARD -> calculateBestMove(board, player);
         };
     }
 
@@ -40,7 +40,7 @@ class AI {
      * @return an {@code Optional} describing the generated random move,
      * if the move is present, otherwise an empty {@code Optional}
      */
-    private static Optional<Move> randomMove(Board board) {
+    private static Optional<Move> generateRandomMove(Board board) {
         var moves = board.getAvailableMoves();
         int index = random.nextInt(moves.size());
         return moves.isEmpty() ? Optional.empty() : Optional.of(moves.get(index));
@@ -55,7 +55,7 @@ class AI {
      * @return an {@code Optional} describing the generated move,
      * if the move is present, otherwise an empty {@code Optional}
      */
-    private static Optional<Move> bestMove(Board board, Marker player) {
+    private static Optional<Move> calculateBestMove(Board board, Marker player) {
         if (board.isFilled()) {
             return Optional.empty();
         }
@@ -86,7 +86,7 @@ class AI {
 
         int bestScore = isMaximizing ? -N : N;
         for (var move: board.getAvailableMoves()) {
-            board.move(move, player);
+            board.tryMakeMove(move, player);
             var score = minimax(board, player.getOpposite(), depth + 1, !isMaximizing);
             if (isMaximizing && score > bestScore || !isMaximizing && score < bestScore) {
                 bestScore = score;
