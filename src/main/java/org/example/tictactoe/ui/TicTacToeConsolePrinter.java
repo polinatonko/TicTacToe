@@ -30,7 +30,7 @@ public class TicTacToeConsolePrinter {
 
     public static void printWelcomeMessage() {
         System.out.println("+" + "-".repeat(WELCOME_MESSAGE_WIDTH) + "+");
-        System.out.printf("|%ds|\n".formatted(WELCOME_MESSAGE_WIDTH), "Welcome to Tic-Tac-Toe Game!");
+        System.out.printf("|%30s|\n", "Welcome to Tic-Tac-Toe Game!");
         System.out.println("+" + "-".repeat(WELCOME_MESSAGE_WIDTH) + "+");
     }
 
@@ -81,11 +81,12 @@ public class TicTacToeConsolePrinter {
         System.out.println(sep);
         System.out.printf("| %-19s |\n", "Game Statistics");
         System.out.println(sep);
-        System.out.printf("| %-7s | %-10s |\n", "Player", "Wins");
+        var lineFormat = "| %-7s | %-9s |\n";
+        System.out.printf(lineFormat, "Player", "Wins");
         System.out.println(sep);
-        System.out.printf("| %-7s | %-10d |\n", "X", stats.get(WIN_X));
-        System.out.printf("| %-7s | %-10d |\n", "O", stats.get(WIN_O));
-        System.out.printf("| %-7s | %-10d |\n", "Draws", stats.get(DRAW));
+        System.out.printf(lineFormat, "X", stats.get(WIN_X));
+        System.out.printf(lineFormat, "O", stats.get(WIN_O));
+        System.out.printf(lineFormat, "Draws", stats.get(DRAW));
         System.out.println(sep);
     }
 
