@@ -1,4 +1,13 @@
 # Tic-Tac-Toe Console Game
-A simple console game featuring two available modes:
-1. Human vs. Human
-2. Human vs. Computer (with two difficulty levels)
+
+A Java console implementation of the classic Tic-Tac-Toe game with multiple game modes, AI opponent, and statistics tracking.
+
+## Features
+
+### Game Modes
+- **Human vs Human (HvH)** - Classic two-player gameplay
+- **Human vs Computer (HvC)** - Play against AI with configurable difficulty
+
+### AI Difficulty Levels
+- **Easy** - Random move strategy for casual gameplay
+- **Hard** - Minimax algorithm for challenging opponent

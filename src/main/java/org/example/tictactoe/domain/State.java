@@ -1,11 +1,19 @@
 package org.example.tictactoe.domain;
 
 /**
- * Current state of the game (board).
+ * Represents the current state of the Tic-Tac-Toe game.
  */
 public enum State {
-    NOT_OVER,
+
+    /** The game is currently in progress and can accept moves. */
+    IN_PROGRESS,
+
+    /** The game has ended in a draw (no winner). */
     DRAW,
+
+    /** Player X has won the game. */
     WIN_X,
+    
+    /** Player O has won the game. */
     WIN_O
 }

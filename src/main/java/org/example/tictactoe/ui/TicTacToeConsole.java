@@ -1,91 +1,91 @@
 package org.example.tictactoe.ui;
 
-import org.example.tictactoe.logic.GameEngine;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+import org.example.tictactoe.engine.GameEngine;
 import org.example.tictactoe.domain.Level;
 import org.example.tictactoe.domain.Mode;
 import org.example.tictactoe.domain.Move;
-import org.example.tictactoe.domain.State;
+import org.example.tictactoe.engine.exception.InvalidMoveException;
+import org.example.tictactoe.service.GameStatisticsService;
 
-import java.util.*;
+import static org.example.tictactoe.domain.Mode.HVC;
+import static org.example.tictactoe.domain.Mode.HVH;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printWelcomeMessage;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printGameResult;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printStatistics;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.askForMode;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.askForLevel;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.askForBoardSize;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printTryAgainMessage;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printBoard;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printError;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printComputerMoveMessage;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.askForPlayerMove;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.printNewGameMessage;
+import static org.example.tictactoe.ui.TicTacToeConsolePrinter.askToPlayAgain;
 
 /**
- * Tic-Tac-Toe console interface.
+ * Represents the Tic-Tac-Toe console interface.
  */
 public class TicTacToeConsole {
-    private GameEngine game;
-    private Map<State, Integer> stats;
+
+    private final GameStatisticsService gameStatisticsService;
     private final Scanner scanner = new Scanner(System.in);
 
+    private GameEngine game;
+    private Mode mode;
+
     /**
-     * Initializes the games' statistics map.
+     * Initializes the game statistics map.
      */
     public TicTacToeConsole() {
-        stats = new EnumMap<>(State.class);
-        for (var state : State.values()) {
-            stats.put(state, 0);
-        }
+        gameStatisticsService = new GameStatisticsService();
     }
 
     /**
      * Starts the game cycle.
      */
     public void start() {
-        printHelloMessage();
+        printWelcomeMessage();
 
-        Mode mode = getMode();
-        int size = getBoardSize();
-        Level level = (mode == Mode.HVC) ? getLevel() : null;
-        game = new GameEngine(size, mode, level);
+        this.mode = getMode();
+        var size = getBoardSize();
+        Level level = (mode == HVC) ? getLevel() : null;
+        game = new GameEngine(size, level);
 
-        boolean playGame = true;
+        var playGame = true;
         while (playGame) {
-            switch (game.getMode()) {
+            switch (mode) {
                 case HVH -> playHumanVersusHuman();
                 case HVC -> playHumanVersusComputer();
             }
 
-            stats.compute(game.getState(), (state, count) -> count + 1);
-            printGameResult();
+            gameStatisticsService.recordGameOutcome(game.getState());
+            printGameResult(game);
             playGame = retry();
         }
 
-        printStatistics();
+        printStatistics(gameStatisticsService.getStatistics());
     }
 
-    private void printHelloMessage() {
-        System.out.println("+" + "-".repeat(30) + "+");
-        System.out.printf("|%30s|\n", "Welcome to Tic-Tac-Toe Game!");
-        System.out.println("+" + "-".repeat(30) + "+");
-    }
-
-    /**
-     * Reads the game mode from the console
-     * until a valid integer value is entered.
-     *
-     * @return the mode of the game
-     */
     private Mode getMode() {
-        System.out.println("Choose the game mode:\n1. HvH\n2. HvC");
+        askForMode();
         String mode;
         do {
             mode = scanner.nextLine().trim().toLowerCase();
         } while (!mode.equals("1") && !mode.equals("2"));
 
         return switch (mode) {
-            case "1" -> Mode.HVH;
-            case "2" -> Mode.HVC;
+            case "1" -> HVH;
+            case "2" -> HVC;
             default -> throw new RuntimeException("Unknown game mode!");
         };
     }
 
-    /**
-     * Reads the game difficulty level from the console
-     * until a valid integer value is entered.
-     *
-     * @return the difficulty level of the game
-     */
     private Level getLevel() {
-        System.out.println("Choose the game level:\n1. Easy\n2. Hard");
+        askForLevel();
         String level;
         do {
             level = scanner.nextLine().trim().toLowerCase();
@@ -94,169 +94,98 @@ public class TicTacToeConsole {
         return switch (level) {
             case "1" -> Level.EASY;
             case "2" -> Level.HARD;
-            default -> throw new RuntimeException("Unknown level!");
+            default -> throw new RuntimeException("Unknown level (1/2 expected)!");
         };
     }
 
-    /**
-     * Reads the board size from the console until
-     * a valid integer value greater than 2 is entered.
-     *
-     * @return the size of the board
-     */
     private int getBoardSize() {
         int size = -1;
 
         while (size < 3) {
-            System.out.print("Enter the board size (positive integer > 2): ");
+            askForBoardSize();
             try {
                 size = scanner.nextInt();
                 if (size < 3) {
-                    System.out.println("Board size should be a positive integer greater than 2! Try again:");
+                    printTryAgainMessage("Board size should be a positive integer greater than 2");
                 }
             } catch (InputMismatchException ex) {
                 scanner.next();
-                System.out.println("Board size should be an integer! Try again:");
+                printTryAgainMessage("Board size should be an integer");
             }
         }
 
         return size;
     }
 
-    /**
-     * Plays Human Versus Human mode.
-     */
     private void playHumanVersusHuman() {
         while (game.isInProgress()) {
-            System.out.println(game);
+            printBoard(game.getBoard());
             makePlayerMove();
         }
     }
 
-    /**
-     * Plays Human Versus Computer mode.
-     */
     private void playHumanVersusComputer() {
+        var board = game.getBoard();
         while (game.isInProgress()) {
-            System.out.println(game);
+            printBoard(board);
             makePlayerMove();
             if (game.isInProgress()) {
-                System.out.println(game);
-                System.out.println("Computer move:");
-                playComputerMove();
+                printBoard(board);
+                makeComputerMove();
             }
         }
     }
 
-    /**
-     * Inputs player's move from the console
-     * and then performs this move.
-     */
     private void makePlayerMove() {
-        Move move = inputMove();
-        while (!game.makePlayerMove(move)) {
-            System.out.println("Cell [" + move.row() + ", " + move.col() + "] isn't empty.");
-            move = inputMove();
-        }
-    }
-
-    /**
-     * Reads the player's move from the console until it is entered in the correct format
-     * (integers for row and column separated by comma) and within the correct bounds (1..size).
-     *
-     * @return the player's move
-     */
-    private Move inputMove() {
-        var player = game.getCurrentPlayer();
-        System.out.println("Enter player " + player +" move:");
-        Move move = null;
-        boolean isInputValid = false;
-        while (!isInputValid) {
+        do {
             try {
-                move = new Move(scanner.nextInt(), scanner.nextInt());
-                if (move.row() > 0 && move.row() <= game.getBoardSize()
-                        && move.col() > 0 && move.col() <= game.getBoardSize()) {
-                    isInputValid = true;
-                } else {
-                    System.out.println("Row and column should be in the [1.." + game.getBoardSize() + "] bounds!");
-                }
+                var move = inputMove();
+                game.makePlayerMove(move);
+                break;
+            } catch (InvalidMoveException ex) {
+                printError(ex.getMessage());
             }
-            catch (InputMismatchException ex) {
-                System.out.println("Invalid position! Try again:");
-            }
-            finally {
-                scanner.nextLine();
-            }
-        }
-        return move;
+        } while (true);
     }
 
-    /**
-     * Performs computer move.
-     */
-    private void playComputerMove() {
+    private void makeComputerMove() {
+        printComputerMoveMessage();
         game.makeComputerMove();
     }
 
-    private void printGameResult() {
-        System.out.println(game);
-        var message = switch (game.getState()) {
-            case NOT_OVER -> "Game still in progress!";
-            case DRAW -> "Draw!";
-            case WIN_X -> "Winner - X!";
-            case WIN_O -> "Winner - O!";
-        };
-        System.out.println(message);
+    private Move inputMove() {
+        askForPlayerMove(game.getCurrentPlayer());
+        while (true) {
+            try {
+                return new Move(scanner.nextInt() - 1, scanner.nextInt() - 1);
+            }
+            catch (InputMismatchException ex) {
+                printTryAgainMessage("Invalid move position");
+            } finally {
+                scanner.nextLine();
+            }
+        }
     }
-
-    /**
-     * Resets the game state if the user wants to play the game again.
-     *
-     * @return {@code true} if the game have restarted.
-     */
+    
     private boolean retry() {
         if (inputTryAgain()) {
             game.reset();
-            System.out.println("New game has just started!");
+            printNewGameMessage();
             return true;
         }
         return false;
     }
 
-    /**
-     * Asks the user if he wants to play another game.
-     *
-     * @return {@code true} if the user chose to start the game again.
-     */
     private boolean inputTryAgain() {
         while (true) {
-            System.out.println("Do you want to play one more game? (Y/N):");
+            askToPlayAgain();
             String userInput = scanner.nextLine().trim();
             if (userInput.equalsIgnoreCase("y")) {
                 return true;
             } else if (userInput.equalsIgnoreCase("n")) {
                 return false;
             }
-            System.out.println("Incorrect input! Please, try again:");
-        }
-    }
-
-    /**
-     * Prints statistics of the games in the current session:
-     * the number of draws and wins for each player.
-     */
-    private void printStatistics() {
-        String sep = "+" + "-".repeat(21) + "+";
-        System.out.println(sep);
-        System.out.printf("|%-21s|%n", "Games Statistics:");
-        System.out.println(sep);
-
-        String template = "|%-10s|%10s|%n";
-        for (var state : State.values()) {
-            if (state != State.NOT_OVER) {
-                System.out.printf(template, state + ": ", stats.get(state));
-                System.out.println(sep);
-            }
+            printTryAgainMessage("Incorrect input (y/n expected)");
         }
     }
 }
